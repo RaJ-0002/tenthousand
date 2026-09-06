@@ -24,6 +24,7 @@ class DashboardScreen(ft.Column):
         )
         self._list_column = ft.Column(spacing=0, scroll=ft.ScrollMode.AUTO, expand=True)
         self._show_archived = ft.Switch(label="Show archived", value=False, on_change=self._reload_sync)
+        self._error = ft.Text("", color=theme.DANGER, size=12)
 
         self.controls = [
             ft.Container(
@@ -45,6 +46,7 @@ class DashboardScreen(ft.Column):
                         ),
                         ft.Row([self._title_field, ft.FilledButton("Add goal", on_click=self._create_goal)]),
                         self._show_archived,
+                        self._error,
                     ],
                 ),
             ),
@@ -78,33 +80,41 @@ class DashboardScreen(ft.Column):
         if self.page:
             self.update()
 
+    def _run_action(self, fn: callable) -> None:
+        """Runs a service call, surfacing any server-side rejection (a
+        business rule violation, RLS denial, or network error) as an inline
+        message instead of letting it escape uncaught and crash the session.
+        """
+        try:
+            fn()
+        except Exception as ex:
+            self._error.value = str(ex)
+            self.update()
+            return
+        self._error.value = ""
+        self.page.run_task(self.reload)
+
     def _create_goal(self, e: ft.ControlEvent) -> None:
         title = self._title_field.value.strip()
         if not title:
             return
-        self._service.create_goal(title)
+        self._run_action(lambda: self._service.create_goal(title))
         self._title_field.value = ""
-        self.page.run_task(self.reload)
 
     def _start(self, goal: Goal) -> None:
-        self._service.start(goal.id)
-        self.page.run_task(self.reload)
+        self._run_action(lambda: self._service.start(goal.id))
 
     def _pause(self, goal: Goal) -> None:
-        self._service.pause(goal.id)
-        self.page.run_task(self.reload)
+        self._run_action(lambda: self._service.pause(goal.id))
 
     def _resume(self, goal: Goal) -> None:
-        self._service.resume(goal.id)
-        self.page.run_task(self.reload)
+        self._run_action(lambda: self._service.resume(goal.id))
 
     def _archive(self, goal: Goal) -> None:
-        self._service.archive(goal.id)
-        self.page.run_task(self.reload)
+        self._run_action(lambda: self._service.archive(goal.id))
 
     def _achieve(self, goal: Goal) -> None:
-        self._service.mark_achieved(goal.id)
-        self.page.run_task(self.reload)
+        self._run_action(lambda: self._service.mark_achieved(goal.id))
 
     def tick(self) -> None:
         """Called on a timer to smoothly update running goals' displayed
