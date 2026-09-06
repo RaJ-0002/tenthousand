@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import asyncio
+from urllib.parse import parse_qs, urlsplit
 
 import flet as ft
 
@@ -22,7 +23,31 @@ class TenThousandApp:
         self._tick_task: asyncio.Task | None = None
 
         configure_page(page)
-        self._show_auth()
+
+        auth_code = self._extract_oauth_code(page.route)
+        if auth_code:
+            self._complete_oauth(auth_code)
+        else:
+            self._show_auth()
+
+    @staticmethod
+    def _extract_oauth_code(route: str) -> str | None:
+        """Pulls `code` out of the PKCE redirect Google/Supabase send the
+        browser back to, e.g. `/?code=...`. Returns None on a normal load.
+        """
+        query = parse_qs(urlsplit(route).query)
+        codes = query.get("code")
+        return codes[0] if codes else None
+
+    def _complete_oauth(self, auth_code: str) -> None:
+        try:
+            result = self._auth_service.complete_oauth_redirect(auth_code)
+        except Exception:
+            # The code may be stale (page reloaded, or already redeemed) --
+            # fall back to a normal login rather than getting stuck.
+            self._show_auth()
+            return
+        self._on_authenticated(result)
 
     def _show_auth(self) -> None:
         self._stop_ticking()

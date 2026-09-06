@@ -60,15 +60,21 @@ class AuthService:
 
     # --- Google OAuth --------------------------------------------------
     # Flet's web/Android targets open the returned URL in a browser/webview;
-    # the redirect back into the app completes the session. Wire the actual
-    # redirect handling in ui screens once a Supabase project + OAuth client
-    # exist (needs real credentials, see README "Google OAuth setup").
+    # Google then redirects back to `redirect_to` with a `?code=...` param
+    # (PKCE flow). The client that both starts and finishes this exchange
+    # must be the same object, since the PKCE code_verifier it generated is
+    # kept in the Supabase client's own in-memory storage -- see
+    # complete_oauth_redirect below, which reuses this same self._client.
 
     def google_oauth_url(self, redirect_to: str) -> str:
         res = self._client.auth.sign_in_with_oauth(
             {"provider": "google", "options": {"redirect_to": redirect_to}}
         )
         return res.url
+
+    def complete_oauth_redirect(self, auth_code: str) -> AuthResult:
+        res = self._client.auth.exchange_code_for_session({"auth_code": auth_code})
+        return AuthResult(user_id=res.user.id, email=res.user.email)
 
     # --- Session / deletion -------------------------------------------
 

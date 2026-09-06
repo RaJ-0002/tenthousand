@@ -15,6 +15,7 @@ class Settings:
     supabase_url: str
     supabase_anon_key: str
     google_web_client_id: str | None
+    app_base_url: str
 
     @classmethod
     def from_env(cls) -> "Settings":
@@ -29,6 +30,13 @@ class Settings:
             supabase_url=url,
             supabase_anon_key=key,
             google_web_client_id=os.environ.get("GOOGLE_WEB_CLIENT_ID"),
+            # Used as the OAuth redirect target. Flet's Page.url exposes the
+            # internal ws:// transport address, not a browser-usable http(s)
+            # URL, so this must be set explicitly to wherever the app is
+            # actually reachable -- and it must match (or be listed under)
+            # Supabase's Auth > URL Configuration > Redirect URLs, or
+            # Supabase silently falls back to its default Site URL.
+            app_base_url=os.environ.get("APP_BASE_URL", "http://127.0.0.1:8550"),
         )
 
 

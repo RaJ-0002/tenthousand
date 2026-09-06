@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import flet as ft
 
+from ..config import settings
 from ..ui import theme
 from .service import AuthService, EmailConfirmationRequired
 
@@ -83,7 +84,7 @@ class AuthScreen(ft.Column):
 
     def _on_google(self, e: ft.ControlEvent) -> None:
         try:
-            url = self._auth.google_oauth_url(redirect_to=self.page.route or "/")
+            url = self._auth.google_oauth_url(redirect_to=settings().app_base_url)
 
             async def _open() -> None:
                 await self.page.launch_url(url)

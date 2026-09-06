@@ -43,23 +43,36 @@ confirm `pg_cron` is available on your plan/region (it is on all Supabase
 Postgres instances at the time of writing).
 
 ### 3. Enable Google OAuth (optional, for "Continue with Google")
-In Supabase Dashboard → Authentication → Providers → Google, add your
-OAuth client ID/secret from Google Cloud Console. Supabase Auth links a
-Google sign-in to the same `auth.users` row as an email/password account
-sharing that email, which is what gives you "one account per email" across
-both methods.
+1. In Google Cloud Console, create an OAuth client (Web application) with
+   authorized redirect URI `https://YOUR-PROJECT-REF.supabase.co/auth/v1/callback`.
+2. In Supabase Dashboard → Authentication → Providers → Google, enable it
+   and paste that client's ID/secret.
+3. In Supabase Dashboard → Authentication → URL Configuration, add
+   `APP_BASE_URL` (see below, `http://127.0.0.1:8550` for local dev) under
+   **Redirect URLs**. Supabase only redirects back to URLs on this list —
+   anything else silently falls back to the default Site URL instead.
+
+Supabase Auth links a Google sign-in to the same `auth.users` row as an
+email/password account sharing that email, which is what gives you "one
+account per email" across both methods.
 
 ### 4. Configure the app
 ```
 cd app
 cp .env.example .env
-# fill in SUPABASE_URL / SUPABASE_ANON_KEY
+# fill in SUPABASE_URL / SUPABASE_ANON_KEY / APP_BASE_URL
 pip install -e .
 ```
 Never put the Supabase **service_role** key in this app — only the anon
 key. The security-definer functions (including account deletion) run with
 elevated privilege *inside* Postgres precisely so the client never needs
 that key.
+
+Run the local dev server on the fixed port matching `APP_BASE_URL` so the
+Google OAuth redirect resolves correctly:
+```
+flet run main.py --web --port 8550
+```
 
 ### 5. Run it
 ```
