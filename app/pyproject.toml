@@ -1,0 +1,19 @@
+[project]
+name = "tenthousand"
+version = "0.1.0"
+description = "TenThousand: a 10,000-hour goal tracker (Flet + Supabase)"
+requires-python = ">=3.11"
+dependencies = [
+    "flet[all]>=0.28.0",
+    "supabase>=2.9.0",
+    "python-dotenv>=1.0.1",
+]
+
+[tool.flet]
+# `flet build apk` / `flet build web` read this section.
+org = "com.tenthousand"
+product = "TenThousand"
+
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
