@@ -179,7 +179,7 @@ begin
    returning * into g;
 
   insert into public.timer_logs (goal_id, event_type, event_at, delta_seconds, accumulated_seconds_after)
-  values (g.id, case when g.accumulated_seconds = 0 then 'start' else 'resume' end,
+  values (g.id, (case when g.accumulated_seconds = 0 then 'start' else 'resume' end)::goal_event_type,
           now(), 0, g.accumulated_seconds);
 
   return g;

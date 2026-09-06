@@ -3,7 +3,7 @@ from __future__ import annotations
 import flet as ft
 
 from ..ui import theme
-from .service import AuthService
+from .service import AuthService, EmailConfirmationRequired
 
 
 class AuthScreen(ft.Column):
@@ -73,6 +73,11 @@ class AuthScreen(ft.Column):
             elif self._mode == "reset_verify":
                 result = self._auth.verify_reset_otp(self._email.value, self._otp.value, self._password.value)
                 self._on_authenticated(result)
+        except EmailConfirmationRequired as ex:
+            self._mode = "sign_in"
+            self._primary_button.content = "Sign in"
+            self._switch_mode_button.content = "Need an account? Sign up"
+            self._set_error(str(ex))
         except Exception as ex:  # surfaced to the user, not swallowed
             self._set_error(str(ex))
 

@@ -21,6 +21,16 @@ class AuthResult:
     email: str
 
 
+class EmailConfirmationRequired(Exception):
+    """Raised when sign-up succeeded but Supabase Auth requires the user to
+    confirm their email before a session (and thus a usable JWT) exists.
+
+    Until confirmed, the Supabase client has no access token, so every RPC
+    call runs as the anonymous role and auth.uid() is null server-side --
+    this must never be treated as "signed in".
+    """
+
+
 class AuthService:
     def __init__(self) -> None:
         self._client = get_client()
@@ -29,6 +39,10 @@ class AuthService:
 
     def sign_up_with_password(self, email: str, password: str) -> AuthResult:
         res = self._client.auth.sign_up({"email": email, "password": password})
+        if res.session is None:
+            raise EmailConfirmationRequired(
+                "Account created. Check your email to confirm it, then sign in."
+            )
         return AuthResult(user_id=res.user.id, email=res.user.email)
 
     def sign_in_with_password(self, email: str, password: str) -> AuthResult:
