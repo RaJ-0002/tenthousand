@@ -61,8 +61,12 @@ account per email" across both methods.
 cd app
 cp .env.example .env
 # fill in SUPABASE_URL / SUPABASE_ANON_KEY / APP_BASE_URL
-pip install -e .
+pip install -e ".[dev]"
 ```
+`pyproject.toml`'s base `dependencies` intentionally has no `flet` extras —
+`flet build` installs that exact list into the deployed app's runtime, which
+never needs the desktop/web/cli host tooling. The `dev` extra above adds
+those back for local development only.
 Never put the Supabase **service_role** key in this app — only the anon
 key. The security-definer functions (including account deletion) run with
 elevated privilege *inside* Postgres precisely so the client never needs

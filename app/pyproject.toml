@@ -4,10 +4,28 @@ version = "0.1.0"
 description = "TenThousand: a 10,000-hour goal tracker (Flet + Supabase)"
 requires-python = ">=3.11"
 dependencies = [
-    "flet[all]>=0.28.0",
+    # Pinned exactly: flet's release history spans many mutually-incompatible
+    # minor versions (0.28 through 0.86+), so an open range like ">=0.28.0"
+    # gives `flet build`'s dependency resolver a set it can't satisfy at all
+    # ("ResolutionImpossible"). Pin to whatever version you've developed and
+    # tested against, and bump deliberately.
+    #
+    # No extras here on purpose: `flet build` installs exactly this list into
+    # the *deployed* app's embedded runtime (a WASM/Emscripten Python for
+    # web, or the on-device interpreter for Android) -- it never needs
+    # flet-cli/flet-web/flet-desktop, which are host-side dev tooling. The
+    # [all] extra used to pull in flet-cli, whose own `watchdog` dependency
+    # (used for `flet run`'s hot reload) has no wheel for those targets and
+    # broke the build. Local dev extras live in `dev` below instead.
+    "flet==0.86.5",
     "supabase>=2.9.0",
     "python-dotenv>=1.0.1",
 ]
+
+[project.optional-dependencies]
+# `pip install -e ".[dev]"` -- adds the desktop/web host backends and the
+# `flet` CLI needed to run/build locally. Never referenced by `flet build`.
+dev = ["flet[desktop,web,cli]==0.86.5"]
 
 [tool.flet]
 # `flet build apk` / `flet build web` read this section.
